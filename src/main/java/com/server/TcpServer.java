@@ -3,10 +3,7 @@ package com.server;
 import com.kurs.dto.*;
 import com.server.Entities.Tour;
 import com.server.Entities.User;
-import com.server.Service.LoginService;
-import com.server.Service.ProfileService;
-import com.server.Service.RegistrationService;
-import com.server.Service.TourService;
+import com.server.Service.*;
 import com.server.search.TourSearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -28,13 +25,15 @@ public class TcpServer {
     private final RegistrationService registrationService;
     private final ProfileService profileService;
     private final TourService tourService;
+    private final BookingService bookingService;
 
     @Autowired
-    public TcpServer(LoginService loginService, RegistrationService registrationService, ProfileService profileService, TourService tourService) {
+    public TcpServer(LoginService loginService, RegistrationService registrationService, ProfileService profileService, TourService tourService, BookingService bookingService) {
         this.loginService = loginService;
         this.registrationService = registrationService;
         this.profileService = profileService;
         this.tourService = tourService;
+        this.bookingService = bookingService;
     }
 
     @PostConstruct
@@ -127,6 +126,20 @@ public class TcpServer {
                   return tourDTO;
                }).toList();
                TourResponse resp = new TourResponse(true, "Туры получены", toursDTO);
+               out.writeObject(resp);
+               out.flush();
+           } else if (input instanceof BookTourRequest req) {
+               User user = SessionManager.getUser(req.getSessionId());
+               if (user == null) {
+                   BookTourResponse resp = new BookTourResponse(false, "Сессия не найдена");
+                   out.writeObject(resp);
+                   out.flush();
+                   return;
+               }
+
+               boolean bookingSucces = bookingService.bookTour(req.getTourId(), user.getId());
+               BookTourResponse resp = new BookTourResponse(bookingSucces,
+                       bookingSucces ? "Тур успешно забронирован" : "Не удалось забронировать тур");
                out.writeObject(resp);
                out.flush();
            }
