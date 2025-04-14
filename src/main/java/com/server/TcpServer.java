@@ -14,7 +14,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -140,6 +139,19 @@ public class TcpServer {
                boolean bookingSucces = bookingService.bookTour(req.getTourId(), user.getId());
                BookTourResponse resp = new BookTourResponse(bookingSucces,
                        bookingSucces ? "Тур успешно забронирован" : "Не удалось забронировать тур");
+               out.writeObject(resp);
+               out.flush();
+           } else if (input instanceof BookingRequest req) {
+               String sessionId = req.getSessionId();
+               User user = SessionManager.getUser(sessionId);
+               if (user == null) {
+                   BookingResponse resp = new BookingResponse(false, "Сессия не найдена", null);
+                   out.writeObject(resp);
+                   out.flush();
+                   return;
+               }
+               List<BookingDTO> bookings = bookingService.getBookingByUserId(user.getId());
+               BookingResponse resp = new BookingResponse(true, "Бронирования получены", bookings);
                out.writeObject(resp);
                out.flush();
            }
