@@ -1,9 +1,11 @@
 package com.server;
 
 import com.kurs.dto.*;
+import com.kurs.dto.AdminDTOs.*;
 import com.server.Entities.Tour;
 import com.server.Entities.User;
 import com.server.Service.*;
+import com.server.Service.AdminService.AdminService;
 import com.server.search.TourSearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -25,14 +27,16 @@ public class TcpServer {
     private final ProfileService profileService;
     private final TourService tourService;
     private final BookingService bookingService;
+    private final AdminService adminService;
 
     @Autowired
-    public TcpServer(LoginService loginService, RegistrationService registrationService, ProfileService profileService, TourService tourService, BookingService bookingService) {
+    public TcpServer(LoginService loginService, RegistrationService registrationService, ProfileService profileService, TourService tourService, BookingService bookingService, AdminService adminService) {
         this.loginService = loginService;
         this.registrationService = registrationService;
         this.profileService = profileService;
         this.tourService = tourService;
         this.bookingService = bookingService;
+        this.adminService = adminService;
     }
 
     @PostConstruct
@@ -152,6 +156,21 @@ public class TcpServer {
                }
                List<BookingDTO> bookings = bookingService.getBookingByUserId(user.getId());
                BookingResponse resp = new BookingResponse(true, "Бронирования получены", bookings);
+               out.writeObject(resp);
+               out.flush();
+           } else if (input instanceof UsersRequest req) {
+                List<UserDTO> users = adminService.getUsers();
+                UsersResponse resp = new UsersResponse(true, "Пользователи получены", users);
+                out.writeObject(resp);
+                out.flush();
+           } else if (input instanceof DeleteUserRequest req) {
+               boolean success = adminService.deleteUser(req.getUserId());
+               DeleteUserResponse resp = new DeleteUserResponse(success, success ? "Пользователь удалён" : "Ошибка удаления пользователя");
+               out.writeObject(resp);
+               out.flush();
+           } else if (input instanceof PromoteUserRequest req) {
+               boolean success = adminService.promoteToAdmin(req.getUserId());
+               PromoteUserResponse resp = new PromoteUserResponse(success, success ? "Пользователь теперь администратор" : "Ошибка изменения роли");
                out.writeObject(resp);
                out.flush();
            }
