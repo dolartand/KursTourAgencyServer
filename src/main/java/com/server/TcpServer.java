@@ -173,6 +173,72 @@ public class TcpServer {
                PromoteUserResponse resp = new PromoteUserResponse(success, success ? "Пользователь теперь администратор" : "Ошибка изменения роли");
                out.writeObject(resp);
                out.flush();
+           } else if (input instanceof AddTourRequest req) {
+               Tour newTour = new Tour();
+               newTour.setTitle(req.getTitle());
+               newTour.setDescription(req.getDescription());
+               newTour.setCountry(req.getCountry());
+               newTour.setStartDate(req.getStartDate());
+               newTour.setNights(req.getNights());
+               newTour.setPrice(req.getPrice());
+               newTour.setFood(req.getFood());
+               newTour.setCapacity(req.getCapacity());
+
+               newTour = tourService.saveTour(newTour);
+
+               TourDTO tourDTO = new TourDTO();
+               tourDTO.setId(newTour.getId());
+               tourDTO.setTitle(newTour.getTitle());
+               tourDTO.setDescription(newTour.getDescription());
+               tourDTO.setCountry(newTour.getCountry());
+               tourDTO.setStartDate(newTour.getStartDate());
+               tourDTO.setNights(newTour.getNights());
+               tourDTO.setPrice(newTour.getPrice());
+               tourDTO.setFood(newTour.getFood());
+               tourDTO.setCapacity(newTour.getCapacity());
+
+               AddTourResponse resp = new AddTourResponse(true, "Тур добавлен");
+               out.writeObject(resp);
+               out.flush();
+           } else if (input instanceof UpdateTourRequest req) {
+               Tour tour = tourService.findTourById(req.getId());
+               if (tour == null) {
+                   UpdateTourResponse resp = new UpdateTourResponse(false, "Тур не найден", null);
+                   out.writeObject(resp);
+                   out.flush();
+                   return;
+               }
+
+               tour.setTitle(req.getTitle());
+               tour.setDescription(req.getDescription());
+               tour.setCountry(req.getCountry());
+               tour.setStartDate(req.getStartDate());
+               tour.setNights(req.getNights());
+               tour.setPrice(req.getPrice());
+               tour.setFood(req.getFood());
+               tour.setCapacity(req.getCapacity());
+
+               tour = tourService.saveTour(tour);
+
+               TourDTO tourDTO = new TourDTO();
+               tourDTO.setId(tour.getId());
+               tourDTO.setTitle(tour.getTitle());
+               tourDTO.setDescription(tour.getDescription());
+               tourDTO.setCountry(tour.getCountry());
+               tourDTO.setStartDate(tour.getStartDate());
+               tourDTO.setNights(tour.getNights());
+               tourDTO.setPrice(tour.getPrice());
+               tourDTO.setFood(tour.getFood());
+               tourDTO.setCapacity(tour.getCapacity());
+
+               UpdateTourResponse resp = new UpdateTourResponse(true, "Тур обновлен", tourDTO);
+               out.writeObject(resp);
+               out.flush();
+           } else if (input instanceof DeleteTourRequest req) {
+               boolean success = tourService.deleteTourById(req.getTourId());
+               DeleteTourResponse resp = new DeleteTourResponse(success, success ? "Тур удален" : "Ошибка удаления тура");
+               out.writeObject(resp);
+               out.flush();
            }
         }
         catch (Exception e) {
