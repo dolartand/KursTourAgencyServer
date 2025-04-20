@@ -21,4 +21,7 @@ public class Booking {
 
     @Column(name = "booking_date", nullable = false)
     private LocalDate bookingDate = LocalDate.now();
+
+    @Column(name = "status", nullable = false)
+    private String status = "PENDING";
 }

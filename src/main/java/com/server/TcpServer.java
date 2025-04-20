@@ -2,9 +2,11 @@ package com.server;
 
 import com.kurs.dto.*;
 import com.kurs.dto.AdminDTOs.*;
+import com.server.Entities.Booking;
 import com.server.Entities.Tour;
 import com.server.Entities.User;
 import com.server.Service.*;
+import com.server.Service.AdminService.AdminBookingService;
 import com.server.Service.AdminService.AdminService;
 import com.server.search.TourSearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,15 +30,17 @@ public class TcpServer {
     private final TourService tourService;
     private final BookingService bookingService;
     private final AdminService adminService;
+    private final AdminBookingService adminBookingService;
 
     @Autowired
-    public TcpServer(LoginService loginService, RegistrationService registrationService, ProfileService profileService, TourService tourService, BookingService bookingService, AdminService adminService) {
+    public TcpServer(LoginService loginService, RegistrationService registrationService, ProfileService profileService, TourService tourService, BookingService bookingService, AdminService adminService, AdminBookingService adminBookingService) {
         this.loginService = loginService;
         this.registrationService = registrationService;
         this.profileService = profileService;
         this.tourService = tourService;
         this.bookingService = bookingService;
         this.adminService = adminService;
+        this.adminBookingService = adminBookingService;
     }
 
     @PostConstruct
@@ -239,6 +243,31 @@ public class TcpServer {
                DeleteTourResponse resp = new DeleteTourResponse(success, success ? "Тур удален" : "Ошибка удаления тура");
                out.writeObject(resp);
                out.flush();
+           } else if (input instanceof AdminBookingRequest req) {
+               List<Booking> list = adminBookingService.getAllBookings();
+               List<AdminBookingDTO> dtos = list.stream().map(b -> {
+                   AdminBookingDTO d = new AdminBookingDTO();
+                   d.setId(b.getId());
+                   d.setUserId(b.getUserId());
+                   d.setTourId(b.getTourId());
+                   d.setBookingDate(b.getBookingDate());
+                   d.setStatus(b.getStatus());
+
+                   User user = adminBookingService.findUserById(b.getUserId());
+                   Tour tour = adminBookingService.findTourById(b.getTourId());
+
+                   d.setUserName(user != null ? user.getName() : "неизвестно");
+                   d.setTourName(tour != null ? tour.getTitle() : "неизвестно");
+                   return d;
+               }).toList();
+               AdminBookingResponse resp = new AdminBookingResponse(true, "Успех", dtos);
+               out.writeObject(resp);
+           } else if (input instanceof ApproveBookingRequest req) {
+               boolean ok = adminBookingService.approveBooking(req.getBookingId());
+               out.writeObject(new ApproveBookingResponse(ok, ok ? "Подтверждено" : "Ошибка"));
+           } else if (input instanceof RejectBookingRequest req) {
+               boolean ok = adminBookingService.rejectBooking(req.getBookingId());
+               out.writeObject(new RejectBookingResponse(ok, ok ? "Отклонено" : "Ошибка"));
            }
         }
         catch (Exception e) {
