@@ -14,6 +14,8 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
 
     List<Booking> findByUserId(int userId);
 
+    List<Booking> findByUserIdAndStatus(int userId, String status);
+
     @Modifying
     @Transactional
     void deleteByTourId(@Param("tourId") int tourId);

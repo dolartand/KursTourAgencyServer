@@ -41,7 +41,7 @@ public class BookingService {
     }
 
     public List<BookingDTO> getBookingByUserId(int userId) {
-        List<Booking> bookings = bookingRepository.findByUserId(userId);
+        List<Booking> bookings = bookingRepository.findByUserIdAndStatus(userId, "APPROVED");
         List<BookingDTO> bookingDTOs = new ArrayList<>();
         for (Booking booking : bookings) {
             Tour tour = tourRepository.findById(booking.getTourId()).orElse(null);
